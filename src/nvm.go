@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"os/user"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -224,7 +225,30 @@ func main() {
 	case "u":
 		fallthrough
 	case "use":
-		use(detail, procarch)
+		{
+			if detail == "" {
+				// look for a .nvmrc file in the current working directory
+				cwd, err := os.Getwd()
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				nvmRcPath := path.Join(cwd, ".nvmrc")
+				if file.Exists(nvmRcPath) {
+					fmt.Println("No version provided, found existing .nvmrc in the current directory")
+					nvmRcContents, err := file.ReadLines(nvmRcPath)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					if len(nvmRcContents) > 0 {
+						detail = nvmRcContents[0]
+						fmt.Printf("Found & using v%s, from the .nvmrc in the current directory\n", NvmVersion)
+					}
+				}
+			}
+			use(detail, procarch)
+		}
 	case "ls":
 		fallthrough
 	case "list":
